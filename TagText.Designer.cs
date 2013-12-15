@@ -29,7 +29,10 @@
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
-            //this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+
+            base.AcceptsReturn = true;
+            base.AcceptsTab = true;
+            base.Multiline = true;
         }
 
         #endregion

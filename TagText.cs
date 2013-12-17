@@ -23,6 +23,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
+using System.Diagnostics;
 
 namespace MettleLib
 {
@@ -34,6 +35,9 @@ namespace MettleLib
         private const int TabSize = 4;
 
         private string m_ModuleName;
+        
+        public delegate void InvokeDelegate(string s);
+
 
         public TagText()
         {
@@ -60,51 +64,74 @@ namespace MettleLib
 
         void ITagInterface.UpdateEvent(TagEvent e)
         {
+            string txt;
+
             if ((ModuleName == null) || (ModuleName == e.ModuleName))
             {
                 if (e.Name == base.Tag.ToString())
                 {
                     if (base.Multiline)
                     {
-                        AppendText(e.Data + "\r\n");
-
-                        ScrollToCaret();
+                        try
+                        {
+                            this.BeginInvoke(new InvokeDelegate(TagInvoke), e.Data + "\r\n");
+                        }
+                        catch (Exception ex)
+                        {
+                            Trace.WriteLine("TagText1, " + ex.Message + "\n");
+                        }
                     }
                     else
                     {
-                        base.Text = e.Data;
+                        txt = e.Data;
                     }
                 }
 
                 if (base.Tag.ToString() == "*")
                 {
-                    if (base.Multiline)
+                    try
                     {
-                        if (e.Name.Length < TabSize)
+                        if (base.Multiline)
                         {
-                            AppendText(e.Name + "\t\t\t\t" + e.Data + "\r\n");
+                            if (e.Name.Length < TabSize)
+                            {
+                                txt = e.Name + "\t\t\t\t" + e.Data + "\r\n";
+                            }
+                            else if (e.Name.Length < TabSize * 2)
+                            {
+                                txt = e.Name + "\t\t\t" + e.Data + "\r\n";
+                            }
+                            else if (e.Name.Length < TabSize * 3)
+                            {
+                                txt = e.Name + "\t\t" + e.Data + "\r\n";
+                            }
+                            else
+                            {
+                                txt = e.Name + "\t" + e.Data + "\r\n";
+                            }
                         }
-                        else if (e.Name.Length < TabSize * 2)
+                        else
                         {
-                            AppendText(e.Name + "\t\t\t" + e.Data + "\r\n");
-                        }
-                        else if (e.Name.Length < TabSize*3)
-                        {
-                            AppendText(e.Name + "\t\t" + e.Data + "\r\n");
-                        }
-                        else 
-                        {
-                            AppendText(e.Name + "\t" + e.Data + "\r\n");
+                            txt = e.Name + "\t\t" + e.Data + "\r\n";
                         }
 
-                        ScrollToCaret();
+                        //were in the serial ports thread, update the thread in the GUI context
+                        this.BeginInvoke(new InvokeDelegate(TagInvoke), txt);
+                        
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        Text = e.Name + "\t\t" + e.Data + "\r\n";
+                        Trace.WriteLine("TagText, " + ex.Message + "\n");
                     }
                 }
             }
+        }
+
+        //Update the control in the GUI thread context
+        public void TagInvoke(string s)
+        {
+            this.AppendText(s);
+            ScrollToCaret();
         }
 
         #endregion

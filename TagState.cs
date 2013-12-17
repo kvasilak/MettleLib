@@ -22,11 +22,14 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using System.Diagnostics;
 
 namespace MettleLib
 {
     public partial class TagState : Control, ITagInterface
     {
+        public delegate void InvokeDelegate(bool c);
+
         public TagState()
         {
             InitializeComponent();
@@ -49,16 +52,32 @@ namespace MettleLib
         
         void ITagInterface.UpdateEvent(TagEvent e)
         {
+            bool ckd;
+
             if ((ModuleName == null) || (ModuleName == e.ModuleName))
             {
                 if (e.Name == base.Tag.ToString())
                 {
-                    if (e.Data == base.Text)
-                        Checked = true;
-                    else
-                        Checked = false;
+                    try
+                    {
+                        if (e.Data == base.Text)
+                            ckd = true;
+                        else
+                            ckd = false;
+
+                        this.BeginInvoke(new InvokeDelegate(TagInvoke), ckd);
+                    }
+                    catch (Exception ex)
+                    {
+                        Trace.WriteLine("TagState, " + ex.Message + "\n");
+                    }
                 }
             }
+        }
+
+        public void TagInvoke(bool c)
+        {
+            Checked = c;
         }
         #endregion
 

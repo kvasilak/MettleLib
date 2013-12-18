@@ -128,7 +128,7 @@ namespace MettleLib
         [Description("This event is raised if the value falls into a defined range.")]
         public event ValueInRangeChangedDelegate ValueInRangeChanged;
 
-
+        public delegate void InvokeDelegate(int v);
 
 #endregion
 
@@ -242,9 +242,14 @@ namespace MettleLib
             {
                 if (e.Name == base.Tag.ToString())
                 {
-                    Value = e.Value;
+                    this.BeginInvoke(new InvokeDelegate(TagInvoke), e.Value);
                 }
             }
+        }
+
+        public void TagInvoke(int v)
+        {
+            Value = v;
         }
         #endregion
 

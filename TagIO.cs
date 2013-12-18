@@ -29,6 +29,7 @@ namespace MettleLib
     public partial class TagIO : Control, ITagInterface
     {
         private string m_ModuleName;
+        public delegate void InvokeDelegate(bool c);
 
         public TagIO()
         {
@@ -48,17 +49,27 @@ namespace MettleLib
 
         void ITagInterface.UpdateEvent(TagEvent e)
         {
+            bool ckd;
+
             if ((ModuleName == null) || (ModuleName == e.ModuleName))
             {
                 if (e.Name == base.Tag.ToString())
                 {
                     if (e.Value == 1)
-                        Checked = true;
+                        ckd = true;
                     else
-                        Checked = false;
+                        ckd = false;
+
+                    this.BeginInvoke(new InvokeDelegate(TagInvoke), ckd);
                 }
             }
         }
+
+        public void TagInvoke(bool c)
+        {
+            Checked = c;
+        }
+
 #endregion
         public new string Text
         {

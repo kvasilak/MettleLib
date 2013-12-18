@@ -24,9 +24,35 @@ namespace MettleLib
 
         private List<Module> ModuleList = new List<Module>();
         private String RXBuffer = string.Empty; //new StringBuilder();
-        private Module SelectedModule = null;
+       // private Module SelectedModule = null;
 
         private SerialPort TheSerialPort = new SerialPort();
+
+        private void AddControl(Control ctl)
+        {
+            //determine if the control is one of our custom ones,
+            //our custom controls all implement ITagInterface
+            if (ctl is MettleLib.ITagInterface)
+            {
+                Trace.WriteLine("found, " + ctl.GetType().ToString());
+
+                TagEvents += new TagHandeler(((MettleLib.ITagInterface)ctl).UpdateEvent);
+                ((MettleLib.ITagInterface)ctl).Initialize();
+
+            }
+
+            if (ctl is MettleLib.ITagErrorInterface)
+            {
+                TagErrorEvent += new ErrorHandeler(((MettleLib.ITagErrorInterface)ctl).UpdateEvent);
+                ((MettleLib.ITagErrorInterface)ctl).Initialize();
+            }
+
+            //recursive call into children
+            foreach (Control child in ctl.Controls)
+            {
+                AddControl(child);
+            }
+        }
 
         public void FindControlls(Form frmMain)
         {
@@ -36,37 +62,7 @@ namespace MettleLib
             {
                 foreach (Control ctl in c.Controls)
                 {
-
-
-                    //determine if the control is one of our custom ones,
-                    //our custom controls all implement ITagInterface
-                    if (ctl is MettleLib.ITagInterface)
-                    {
-                        Trace.WriteLine("found, " + ctl.GetType().ToString());
-
-                        TagEvents += new TagHandeler(((MettleLib.ITagInterface)ctl).UpdateEvent);
-                        ((MettleLib.ITagInterface)ctl).Initialize();
-
-                    }
-
-                    if (ctl is MettleLib.ITagErrorInterface)
-                    {
-                        TagErrorEvent += new ErrorHandeler(((MettleLib.ITagErrorInterface)ctl).UpdateEvent);
-                        ((MettleLib.ITagErrorInterface)ctl).Initialize();
-                    }
-
-                    //look for and register child controls in containers
-                    //such as the panel and groupbox
-                    foreach (Control child in ctl.Controls)
-                    {
-                        if (child is MettleLib.ITagInterface)
-                        {
-                            Trace.WriteLine("child, " + child.Name);
-
-                            TagEvents += new TagHandeler(((MettleLib.ITagInterface)child).UpdateEvent);
-                            ((MettleLib.ITagInterface)child).Initialize();
-                        }
-                    }
+                    AddControl(ctl);
                 }
             }
         }
@@ -153,12 +149,20 @@ namespace MettleLib
                             //Process the message
                             //Invoke(new EventHandler(HandleMesage));
                             //HandleMesage(Rx);
-
-                            do //may have multiple tags per line
+                            try
                             {
-                                position = ParseTags(Rx, position);
+                                do //may have multiple tags per line
+                                {
+                                    position = ParseTags(Rx, position);
+                                }
+                                while ((position > 0) && (position < Rx.Length));
                             }
-                            while ((position > 0) && (position < Rx.Length));
+                            catch (Exception ex)
+                            {
+                                Trace.WriteLine("serial0, " + ex.Message + "\n");
+                                Type ep = ex.GetType();
+                                return;
+                            }
                         }
 
                         //Copy everything after \n back into rx buffer, removing string just sent
@@ -175,6 +179,8 @@ namespace MettleLib
 
                         //any more \n?
                         cr = RXBuffer.IndexOf("\n");
+
+                        position = 0;
 
                     }
 
@@ -198,78 +204,99 @@ namespace MettleLib
             int comma2;
             int d;
 
-            //Tag format is >string,string,string<
-            start = instr.IndexOf(">", offset);
+            try
+            {
+                //Tag format is >string,string,string<
+                start = instr.IndexOf(">", offset);
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine("serialx, " + ex.Message + "\n");
+                Type ep = ex.GetType();
+                return end;
+            }
 
+            //how to determine we missed a '>'
             if (start >= 0)//May be first character
             {
-                end = instr.IndexOf("<", start + 1);
-
-                if (end > 0)
+                try
                 {
-                    //found start and end, find the comma
-                    comma = instr.IndexOf(",", start + 1);
+                    end = instr.IndexOf("<", start + 1);
 
-                    if (comma > 0)
+                    if (end > start + 5)//>a,b,c< absloute minimum valid tag
                     {
-                        //find the second comma
-                        comma2 = instr.IndexOf(",", comma + 1);
+                        //found start and end, find the comma
+                        comma = instr.IndexOf(",", start + 1);
 
-                        //find the second command AND need at last one char between second comma and <
-                        if ( (comma2 > 0) && ((comma2 + 1) < end))
+                        if (comma > 0)
                         {
-                            //set the tag recieved event
-                            TagEvent t = new TagEvent();
+                            //find the second comma
+                            comma2 = instr.IndexOf(",", comma + 1);
 
-                            //split the tag and cleanup any whitespace
-                            t.ModuleName = instr.Substring(start + 1, comma - (start + 1)).Trim(); //module name
-                            t.Name = instr.Substring(comma + 1, comma2 - (comma + 1)).Trim(); //tag name
-                            t.Data = instr.Substring(comma2 + 1, end - (comma2 + 1)).Trim(); //data
-
-                            //see if there is a number in the data
-                            if (int.TryParse(t.Data, out d))
+                            //find the second command AND need at last one char between second comma and <
+                            if ((comma2 > 0) && ((comma2 + 1) < end))
                             {
-                                t.Value = d;
-                                t.ValueValid = true;
+                                //set the tag recieved event
+                                TagEvent t = new TagEvent();
+
+                                //split the tag and cleanup any whitespace
+                                t.ModuleName = instr.Substring(start + 1, comma - (start + 1)).Trim(); //module name
+                                t.Name = instr.Substring(comma + 1, comma2 - (comma + 1)).Trim(); //tag name
+                                t.Data = instr.Substring(comma2 + 1, end - (comma2 + 1)).Trim(); //data
+
+                                //see if there is a number in the data
+                                if (int.TryParse(t.Data, out d))
+                                {
+                                    t.Value = d;
+                                    t.ValueValid = true;
+
+                                }
+
+                                //Trace.WriteLine("Module, " + t.ModuleName + ", ");
+                                //Trace.WriteLine("Name, " + t.Name + ", ");
+                                //Trace.WriteLine("Data, " + t.Data + "\n");
+
+                                //this works sort of
+                                if (null != TagEvents)
+                                    TagEvents.Invoke(t);
+
+                                //Uniques(t);
 
                             }
+                            else
+                            {
+                                //Trace.WriteLine("error, " + instr.Substring(offset) + "\n");
 
-                            Trace.WriteLine("Module, " + t.ModuleName + ", ");
-                            Trace.WriteLine("Name, " + t.Name + ", ");
-                            Trace.WriteLine("Data, " + t.Data + "\n");
-
-                            //this works sort of
-                            if (null != TagEvents)
-                                TagEvents.Invoke(t);
-
-                            //Uniques(t);
-
+                                //if (null != TagErrorEvent)
+                                //TagErrorEvent(instr.Substring(offset));
+                            }
                         }
                         else
                         {
-                            Trace.WriteLine("error, " + instr.Substring(offset) + "\n");
+                            //Trace.WriteLine("error1, " + instr.Substring(offset) + "\n");
 
                             //if (null != TagErrorEvent)
-                                //TagErrorEvent(instr.Substring(offset));
+                            //TagErrorEvent(instr.Substring(offset));
                         }
                     }
                     else
                     {
-                        Trace.WriteLine("error1, " + instr.Substring(offset) + "\n");
+                        //Trace.WriteLine("error2, " + instr.Substring(offset) + "\n");
 
                         //if (null != TagErrorEvent)
-                            //TagErrorEvent(instr.Substring(offset));
+                        //TagErrorEvent(instr.Substring(offset));
                     }
                 }
-                else
+                catch (Exception ex)
                 {
-                    Trace.WriteLine("error2, " + instr.Substring(offset) + "\n");
-
-                    //if (null != TagErrorEvent)
-                        //TagErrorEvent(instr.Substring(offset));
+                    Trace.WriteLine("tag formatting, " + ex.Message + "\n");
                 }
             }
-            return end + 1;
+            //else
+            //{
+            //    Trace.WriteLine("error3, " + instr.Substring(offset) + start.ToString() + "\n");
+            //}
+            return end;
         }
 
         private void Uniques(TagEvent e)

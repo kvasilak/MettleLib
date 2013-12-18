@@ -18,6 +18,7 @@ namespace MettleLib
         private const int TabSize = 4;
 
         private string m_ModuleName;
+        public delegate void InvokeDelegate(string s);
 
         public TagError()
         {
@@ -42,53 +43,17 @@ namespace MettleLib
 
         void ITagErrorInterface.UpdateEvent(string s)
         {
-            //if ((ModuleName == null) || (ModuleName == e.ModuleName))
-            //{
-            //    if (e.Name == base.Tag.ToString())
-            //    {
-            //        if (base.Multiline)
-            //        {
-                        AppendText(s + "\r\n");
-
-            //            ScrollToCaret();
-            //        }
-            //        else
-            //        {
-            //            base.Text = e.Data;
-            //        }
-            //    }
-
-            //    if (base.Tag.ToString() == "*")
-            //    {
-            //        if (base.Multiline)
-            //        {
-            //            if (e.Name.Length < TabSize)
-            //            {
-            //                AppendText(e.Name + "\t\t\t\t" + e.Data + "\r\n");
-            //            }
-            //            else if (e.Name.Length < TabSize * 2)
-            //            {
-            //                AppendText(e.Name + "\t\t\t" + e.Data + "\r\n");
-            //            }
-            //            else if (e.Name.Length < TabSize * 3)
-            //            {
-            //                AppendText(e.Name + "\t\t" + e.Data + "\r\n");
-            //            }
-            //            else
-            //            {
-            //                AppendText(e.Name + "\t" + e.Data + "\r\n");
-            //            }
-
-            //            ScrollToCaret();
-            //        }
-            //        else
-            //        {
-            //            Text = e.Name + "\t\t" + e.Data + "\r\n";
-            //        }
-            //    }
-            //}
+            this.BeginInvoke(new InvokeDelegate(TagInvoke), s + "\r\n");
+            //AppendText(s + "\r\n");
         }
 
+
+        //Update the control in the GUI thread context
+        public void TagInvoke(string s)
+        {
+            this.AppendText(s);
+            ScrollToCaret();
+        }
         #endregion
 
         [System.ComponentModel.Browsable(true),

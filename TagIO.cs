@@ -152,6 +152,7 @@ namespace MettleLib
                 m_ModuleName = value;
             }
         }
+        string dummy;
 
         [System.ComponentModel.Browsable(true),
         System.ComponentModel.Category("Mettle"),
@@ -160,11 +161,26 @@ namespace MettleLib
         {
             get
             {
-                return base.Tag.ToString();
+                if (this.Site == null || !this.Site.DesignMode)
+                {
+                    // Not in design mode, okay to do dangerous stuff...
+                    return base.Tag.ToString();
+                }
+                else
+                {
+                    return dummy;
+                }
             }
             set
             {
-                base.Tag = value;
+                if (this.Site == null || !this.Site.DesignMode)
+                {
+                    base.Tag = value;
+                }
+                else
+                {
+                    dummy = value;
+                }
             }
         }
 

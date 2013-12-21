@@ -46,7 +46,6 @@ namespace MettleLib
         //Do any custom initialization here
         void ITagInterface.Initialize()
         {
-            int q = 1;
         }
         
         
@@ -188,13 +187,29 @@ namespace MettleLib
         {
             get
             {
-                return base.Tag.ToString();
+                if (this.Site == null || !this.Site.DesignMode)
+                {
+                    return base.Tag.ToString();
+                }
+                else
+                {
+                    return dummy;
+                }
             }
             set
             {
-                base.Tag = value;
+                if (this.Site == null || !this.Site.DesignMode)
+                {
+                    base.Tag = value;
+                }
+                else
+                {
+                    dummy = value;
+                }
             }
         }
+
+        string dummy;
 
         [System.ComponentModel.Browsable(true),
         System.ComponentModel.Category("Mettle"),
@@ -203,11 +218,26 @@ namespace MettleLib
         {
             get
             {
-                return base.Text.ToString();
+                if (this.Site == null || !this.Site.DesignMode)
+                {
+                    return base.Text.ToString();
+                }
+                else
+                {
+                    return dummy;
+                }
             }
             set
             {
-                base.Text = value;
+                if (this.Site == null || !this.Site.DesignMode)
+                {
+                    base.Text = value;
+                }
+                else
+                {
+                    dummy = value;
+                }
+
             }
         }
 

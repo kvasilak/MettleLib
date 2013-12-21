@@ -68,10 +68,43 @@ namespace MettleLib
         }
 
         public void Close()
-        { }
+        {
+            SafeSerialClose();
+        }
 
-        public void Reset()
-        { }
+        private void ResetControl(Control ctl)
+        {
+            //determine if the control is one of our custom ones,
+            //our custom controls all implement ITagInterface
+            if (ctl is MettleLib.ITagInterface)
+            {
+                Trace.WriteLine("found, " + ctl.GetType().ToString());
+                ((MettleLib.ITagInterface)ctl).Reset();
+
+            }
+
+            if (ctl is MettleLib.ITagErrorInterface)
+            {
+                ((MettleLib.ITagErrorInterface)ctl).Reset();
+            }
+
+            //recursive call into children
+            foreach (Control child in ctl.Controls)
+            {
+                ResetControl(child);
+            }
+        }
+
+        public void Reset(Form frmMain)
+        {
+            foreach (Control c in frmMain.Controls)
+            {
+                foreach (Control ctl in c.Controls)
+                {
+                    ResetControl(ctl);
+                }
+            }
+        }
 
         public void Open()
         {

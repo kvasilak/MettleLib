@@ -31,6 +31,8 @@ namespace MettleLib
         private int indx = 0;
         private string m_ModuleName;
 
+        public delegate void InvokeDelegate(TagEvent e);
+
         public TagChart()
         {
             InitializeComponent();
@@ -49,36 +51,38 @@ namespace MettleLib
         //Module names are ignored until we can figure it out!
         void ITagInterface.UpdateEvent(TagEvent e)
         {
+            //Todo; Suport multiple chart areas
+            if ((Module == null) || (Module == e.ModuleName))
+            {
+                this.BeginInvoke(new InvokeDelegate(TagInvoke), e);
+            }
+        }
+
+        public void TagInvoke(TagEvent e)
+        {
             int i;
 
-            //Todo; Suport multiple chart areas
-
-            if ((ModuleName == null) || (ModuleName == e.ModuleName))
+            //can have multiple series on one chart
+            for (i = 0; i < base.Series.Count; i++)
             {
-                //can have multiple series on one chart
-                for (i = 0; i < base.Series.Count; i++)
+                if (base.Series[i].Name == e.Name)
                 {
-                    //if (e.Name == base.Tag.ToString()) //base.ChartAreas[i].Name) //
-                    if (base.Series[i].Name == e.Name)
+                    if (base.Series[i].Points.Count < base.ChartAreas[0].AxisX.Maximum)
                     {
+                        base.Series[i].Points.Add(e.Value);
+                    }
+                    else
+                    {
+                        indx = int.Parse(base.Series[i].Points[0].GetCustomProperty("index"));
 
-                        if (base.Series[i].Points.Count < base.ChartAreas[0].AxisX.Maximum)
-                        {
-                            base.Series[i].Points.Add(e.Value);
-                        }
-                        else
-                        {
-                            indx = int.Parse(base.Series[i].Points[0].GetCustomProperty("index"));
-
-                            base.Series[i].Points[indx].SetValueY(e.Value);
+                        base.Series[i].Points[indx].SetValueY(e.Value);
 
 
-                            if (++indx > base.ChartAreas[0].AxisX.Maximum - 1) indx = 0;
+                        if (++indx > base.ChartAreas[0].AxisX.Maximum - 1) indx = 0;
 
-                            base.Series[i].Points[0].SetCustomProperty("index", indx.ToString());
+                        base.Series[i].Points[0].SetCustomProperty("index", indx.ToString());
 
-                            Invalidate();
-                        }
+                        Invalidate();
                     }
                 }
             }
@@ -89,7 +93,7 @@ namespace MettleLib
         [System.ComponentModel.Browsable(true),
         System.ComponentModel.Category("Mettle"),
         System.ComponentModel.Description("The module name filter. Leave blank to see all module")]
-        public string ModuleName
+        public string Module
         {
             get
             {
@@ -100,5 +104,6 @@ namespace MettleLib
                 m_ModuleName = value;
             }
         }
+
     }
 }

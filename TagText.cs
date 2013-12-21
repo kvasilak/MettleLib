@@ -66,7 +66,7 @@ namespace MettleLib
         {
             string txt;
 
-            if ((ModuleName == null) || (ModuleName == e.ModuleName))
+            if ((Module == null) || (Module == e.ModuleName))
             {
                 if (e.Name == base.Tag.ToString())
                 {
@@ -138,8 +138,8 @@ namespace MettleLib
 
         [System.ComponentModel.Browsable(true),
         System.ComponentModel.Category("Mettle"),
-        System.ComponentModel.Description("The module name filter. Leave blank to see all module")]
-        public string ModuleName
+        System.ComponentModel.Description("The module filter. Leave blank to see all modules")]
+        public string Module
         {
             get
             {
@@ -148,6 +148,21 @@ namespace MettleLib
             set
             {
                 m_ModuleName = value;
+            }
+        }
+
+        [System.ComponentModel.Browsable(true),
+        System.ComponentModel.Category("Mettle"),
+        System.ComponentModel.Description("The Sort name filter (AKA tag). Leave blank to see all Sorts for this module")]
+        public string Sort
+        {
+            get
+            {
+                return base.Tag.ToString();
+            }
+            set
+            {
+                base.Tag = value;
             }
         }
     }

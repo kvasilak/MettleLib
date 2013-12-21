@@ -59,7 +59,7 @@ namespace MettleLib
         [System.ComponentModel.Browsable(true),
         System.ComponentModel.Category("Mettle"),
         System.ComponentModel.Description("The module name filter. Leave blank to see all module")]
-        public string ModuleName
+        public string Module
         {
             get
             {
@@ -68,6 +68,21 @@ namespace MettleLib
             set
             {
                 m_ModuleName = value;
+            }
+        }
+
+        [System.ComponentModel.Browsable(true),
+        System.ComponentModel.Category("Mettle"),
+        System.ComponentModel.Description("The Sort name filter (AKA tag). Leave blank to see all Sorts for this module")]
+        public string Sort
+        {
+            get
+            {
+                return base.Tag.ToString();
+            }
+            set
+            {
+                base.Tag = value;
             }
         }
     }

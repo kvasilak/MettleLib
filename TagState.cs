@@ -54,7 +54,7 @@ namespace MettleLib
         {
             bool ckd;
 
-            if ((ModuleName == null) || (ModuleName == e.ModuleName))
+            if ((Module == null) || (Module == e.ModuleName))
             {
                 if (e.Name == base.Tag.ToString())
                 {
@@ -117,24 +117,6 @@ namespace MettleLib
             }
         }
 
-
-        private string _ModuleName;
-
-        [System.ComponentModel.Browsable(true),
-        System.ComponentModel.Category("Mettle"),
-        System.ComponentModel.Description("The module name filter. Leave blank to see all modules")]
-        public string ModuleName
-        {
-            get
-            {
-                return _ModuleName;
-            }
-            set
-            {
-                _ModuleName = value;
-            }
-        }
-
         protected override void OnMouseDown(MouseEventArgs e)
         {
             if(e.Button == MouseButtons.Left)
@@ -181,5 +163,54 @@ namespace MettleLib
             base.OnPaintBackground(pevent);
         }
 
+#region Properties
+        private string _ModuleName;
+
+        [System.ComponentModel.Browsable(true),
+        System.ComponentModel.Category("Mettle"),
+        System.ComponentModel.Description("The module name filter. Leave blank to see all modules")]
+        public string Module
+        {
+            get
+            {
+                return _ModuleName;
+            }
+            set
+            {
+                _ModuleName = value;
+            }
+        }
+
+        [System.ComponentModel.Browsable(true),
+        System.ComponentModel.Category("Mettle"),
+        System.ComponentModel.Description("The Sort filter (AKA Tag). Leave blank to see all Sorts  for this module")]
+        public string Sort
+        {
+            get
+            {
+                return base.Tag.ToString();
+            }
+            set
+            {
+                base.Tag = value;
+            }
+        }
+
+        [System.ComponentModel.Browsable(true),
+        System.ComponentModel.Category("Mettle"),
+        System.ComponentModel.Description("The  State filter (AKA text). Active when Module, Tag and State match")]
+        public string State
+        {
+            get
+            {
+                return base.Text.ToString();
+            }
+            set
+            {
+                base.Text = value;
+            }
+        }
+
+#endregion
     }
 }

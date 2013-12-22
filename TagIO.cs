@@ -53,9 +53,10 @@ namespace MettleLib
 
             if ((Module == null) || (Module == e.ModuleName))
             {
-                if (e.Name == base.Tag.ToString())
+                if (e.Name == Sort)
                 {
-                    if (e.Value == 1)
+                    //Apply the bitmask to the passed in data
+                    if ( ((UInt16)e.Value & U16_Mask) == U16_Mask)
                         ckd = true;
                     else
                         ckd = false;
@@ -152,7 +153,7 @@ namespace MettleLib
                 m_ModuleName = value;
             }
         }
-        string dummy;
+        string m_Sort;
 
         [System.ComponentModel.Browsable(true),
         System.ComponentModel.Category("Mettle"),
@@ -161,30 +162,15 @@ namespace MettleLib
         {
             get
             {
-                if (this.Site == null || !this.Site.DesignMode)
-                {
-                    // Not in design mode, okay to do dangerous stuff...
-                    return base.Tag.ToString();
-                }
-                else
-                {
-                    return dummy;
-                }
+                return m_Sort;
             }
             set
             {
-                if (this.Site == null || !this.Site.DesignMode)
-                {
-                    base.Tag = value;
-                }
-                else
-                {
-                    dummy = value;
-                }
+                m_Sort = value;
             }
         }
 
-        UInt16 m_Mask = 0;
+        UInt16 m_Mask = 1;//default mask is bit 1
 
         [System.ComponentModel.Browsable(true),
         System.ComponentModel.Category("Mettle"),

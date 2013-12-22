@@ -240,7 +240,7 @@ namespace MettleLib
         {
             if ((Module == null) || (Module == e.ModuleName))
             {
-                if (e.Name == base.Tag.ToString())
+                if (e.Name == Sort)
                 {
                     this.BeginInvoke(new InvokeDelegate(TagInvoke), e.Value);
                 }
@@ -276,7 +276,7 @@ namespace MettleLib
             }
         }
 
-        string dummy;
+        string m_Sort;
 
         [System.ComponentModel.Browsable(true),
         System.ComponentModel.Category("Mettle"),
@@ -285,27 +285,11 @@ namespace MettleLib
         {
             get
             {
-                if (this.Site == null || !this.Site.DesignMode)
-                {
-                    // Not in design mode, okay to do dangerous stuff...
-                    return base.Tag.ToString();
-                }
-                else
-                {
-                    return dummy;
-                }
-                
+                return m_Sort;
             }
             set
             {
-                if (this.Site == null || !this.Site.DesignMode)
-                {
-                    base.Tag = value;
-                }
-                else
-                {
-                    dummy = value; 
-                }
+                m_Sort = value; 
             }
         }
         

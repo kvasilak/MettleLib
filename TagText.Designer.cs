@@ -32,7 +32,6 @@
 
             base.AcceptsReturn = true;
             base.AcceptsTab = true;
-            base.Multiline = true;
         }
 
         #endregion

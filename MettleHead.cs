@@ -122,7 +122,7 @@ namespace MettleLib
                 try
                 {
                     TheSerialPort.PortName = port; // "COM3";  
-                    TheSerialPort.BaudRate = baud; // 9600;  //int.Parse(Properties.Settings.Default.BaudRate.ToString());
+                    TheSerialPort.BaudRate = baud; // 9600;  
                     TheSerialPort.DataBits = 8;
                     TheSerialPort.Parity = System.IO.Ports.Parity.None;
                     TheSerialPort.StopBits = System.IO.Ports.StopBits.One;

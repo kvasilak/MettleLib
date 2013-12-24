@@ -42,13 +42,25 @@ namespace MettleLib
 
         void ITagInterface.Reset()
         {
+            int i;
+
+            for (i = 0; i < base.Series.Count; i++)
+            {
+                base.Series[i].Points.Clear();
+            }
         }
 
         void ITagInterface.Initialize()
         {
+            int i;
+
+            for (i = 0; i < base.Series.Count; i++)
+            {
+                base.Series[i].SetCustomProperty("index", "0");
+            }
         }
 
-        //Module names are ignored until we can figure it out!
+        //Update the chart
         void ITagInterface.UpdateEvent(TagEvent e)
         {
             //Todo; Suport multiple chart areas
@@ -73,14 +85,13 @@ namespace MettleLib
                     }
                     else
                     {
-                        indx = int.Parse(base.Series[i].Points[0].GetCustomProperty("index"));
+                        indx = int.Parse(base.Series[i].GetCustomProperty("index"));
 
                         base.Series[i].Points[indx].SetValueY(e.Value);
 
-
                         if (++indx > base.ChartAreas[0].AxisX.Maximum - 1) indx = 0;
 
-                        base.Series[i].Points[0].SetCustomProperty("index", indx.ToString());
+                        base.Series[i].SetCustomProperty("index", indx.ToString());
 
                         Invalidate();
                     }

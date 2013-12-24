@@ -13,21 +13,26 @@ namespace MettleLib
 {
     public class MettleHead
     {
-        //string RxString = string.Empty;
 
+        //Sends an event with the current whole line of data
+        public event TagLIneHandeler TagLine;
+        public delegate void TagLIneHandeler(string s);
+
+        //Sends an event the the current tag values
         public event TagHandeler TagEvents;
         public delegate void TagHandeler(TagEvent e);
 
-
+        //Sends an error message
         public event ErrorHandeler TagErrorEvent;
         public delegate void ErrorHandeler(string s);
 
-        private List<Module> ModuleList = new List<Module>();
-        private String RXBuffer = string.Empty; //new StringBuilder();
-       // private Module SelectedModule = null;
+        private String RXBuffer = string.Empty; 
 
         private SerialPort TheSerialPort = new SerialPort();
 
+        //recursive function that Walks through the current form and finds all Mettle custom controls
+        //then add them to our event handeler
+        //this allows us to automatically update them all when a tag is recieved
         private void AddControl(Control ctl)
         {
             //determine if the control is one of our custom ones,
@@ -54,10 +59,10 @@ namespace MettleLib
             }
         }
 
+        //Walk through each tab and find all our custom controls
+        //then register them for the tag recieved event
         public void FindControlls(Form frmMain)
         {
-            //Walk through each tab and find all our custom controls
-            //then register them for the tag recieved event
             foreach (Control c in frmMain.Controls)
             {
                 foreach (Control ctl in c.Controls)
@@ -72,6 +77,7 @@ namespace MettleLib
             SafeSerialClose();
         }
 
+        //Recursively walk through the controls and reset them
         private void ResetControl(Control ctl)
         {
             //determine if the control is one of our custom ones,
@@ -95,6 +101,7 @@ namespace MettleLib
             }
         }
 
+        //clear or reset all Mettle controls
         public void Reset(Form frmMain)
         {
             foreach (Control c in frmMain.Controls)
@@ -106,14 +113,16 @@ namespace MettleLib
             }
         }
 
-        public void Open()
+        public bool Open(string port, int baud)
         {
+            bool retval = false;
+
             if (!TheSerialPort.IsOpen)
             {
                 try
                 {
-                    TheSerialPort.PortName = "COM3";  //Properties.Settings.Default.COMport;
-                    TheSerialPort.BaudRate = 9600;  //int.Parse(Properties.Settings.Default.BaudRate.ToString());
+                    TheSerialPort.PortName = port; // "COM3";  
+                    TheSerialPort.BaudRate = baud; // 9600;  //int.Parse(Properties.Settings.Default.BaudRate.ToString());
                     TheSerialPort.DataBits = 8;
                     TheSerialPort.Parity = System.IO.Ports.Parity.None;
                     TheSerialPort.StopBits = System.IO.Ports.StopBits.One;
@@ -124,16 +133,16 @@ namespace MettleLib
 
                     TheSerialPort.DataReceived += new SerialDataReceivedEventHandler(serialDataReceived);
 
-                    //stripStatus.Text = "Running";
-                    //stripError.Text = "No Errors";
+                    retval = true;
 
                 }
                 catch (Exception ex)
                 {
                     MessageBox.Show("Serial port; " + ex.Message, "Error!");
-                    //stripError.Text = "Serial open Error; " + ex.Message;
                 }
             }
+
+            return retval;
         }
 
         // close the serial port in a seperate thread to prevent
@@ -177,11 +186,13 @@ namespace MettleLib
                         {
                             Rx = RXBuffer.Substring(0, cr);
 
+                            //send message to UI
+                            if (null != TagLine)
+                                TagLine.Invoke(Rx);
+
                             //Trace.WriteLine(Rx + "\n");
 
                             //Process the message
-                            //Invoke(new EventHandler(HandleMesage));
-                            //HandleMesage(Rx);
                             try
                             {
                                 do //may have multiple tags per line
@@ -289,81 +300,45 @@ namespace MettleLib
                                 //Trace.WriteLine("Name, " + t.Name + ", ");
                                 //Trace.WriteLine("Data, " + t.Data + "\n");
 
-                                //this works sort of
+                                //send the tag to all regestered handelers
                                 if (null != TagEvents)
                                     TagEvents.Invoke(t);
-
-                                //Uniques(t);
 
                             }
                             else
                             {
-                                //Trace.WriteLine("error, " + instr.Substring(offset) + "\n");
-
-                                //if (null != TagErrorEvent)
-                                //TagErrorEvent(instr.Substring(offset));
+                                if (null != TagErrorEvent)
+                                    TagErrorEvent(instr.Substring(offset));
                             }
                         }
                         else
                         {
                             //Trace.WriteLine("error1, " + instr.Substring(offset) + "\n");
 
-                            //if (null != TagErrorEvent)
-                            //TagErrorEvent(instr.Substring(offset));
+                            if (null != TagErrorEvent)
+                                TagErrorEvent(instr.Substring(offset));
                         }
                     }
                     else
                     {
                         //Trace.WriteLine("error2, " + instr.Substring(offset) + "\n");
 
-                        //if (null != TagErrorEvent)
-                        //TagErrorEvent(instr.Substring(offset));
+                        if (null != TagErrorEvent)
+                            TagErrorEvent(instr.Substring(offset));
                     }
                 }
                 catch (Exception ex)
                 {
-                    Trace.WriteLine("tag formatting, " + ex.Message + "\n");
+                    //Trace.WriteLine("tag formatting, " + ex.Message + "\n");
+                    if (null != TagErrorEvent)
+                        TagErrorEvent("tag format, " + ex.Message);
                 }
             }
-            //else
-            //{
-            //    Trace.WriteLine("error3, " + instr.Substring(offset) + start.ToString() + "\n");
-            //}
+
             return end;
         }
 
-        private void Uniques(TagEvent e)
-        {
-            bool ModuleNameFound = false;
-
-            //Search to see if tag exists
-            foreach (Module m in ModuleList)
-            {
-                if (m.ModuleName == e.ModuleName)
-                {
-                    ModuleNameFound = true;
-
-                    //module found, add tag or data if unique
-                    m.Uniques(e);
-                }
-            }
-
-            if (false == ModuleNameFound)
-            {
-                ModuleList.Add(new Module(e));
-
-                ModuleList.Sort();
-
-                //we have a new tag, redisplay them all
-                //txtModules.Clear();
-
-                foreach (Module m in ModuleList)
-                {
-                    //txtModules.AppendText(m.ModuleName + "\n");
-                }
-
-            }
-        }
+        
     }
 
     

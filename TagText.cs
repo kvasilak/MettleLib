@@ -68,7 +68,7 @@ namespace MettleLib
 
             if ((Module == null) || (Module == e.ModuleName))
             {
-                if (e.Name == base.Tag.ToString())
+                if (e.Name == Sort)
                 {
                     if (base.Multiline)
                     {
@@ -83,11 +83,11 @@ namespace MettleLib
                     }
                     else
                     {
-                        txt = e.Data;
+                        this.BeginInvoke(new InvokeDelegate(TagInvoke2), e.Data);
                     }
                 }
 
-                if (base.Tag.ToString() == "*")
+                if (Sort == "*")
                 {
                     try
                     {
@@ -109,14 +109,17 @@ namespace MettleLib
                             {
                                 txt = e.Name + "\t" + e.Data + "\r\n";
                             }
+
+                            //were in the serial ports thread, update the thread in the GUI context
+                            this.BeginInvoke(new InvokeDelegate(TagInvoke), txt);
                         }
                         else
                         {
                             txt = e.Name + "\t\t" + e.Data + "\r\n";
+                            this.BeginInvoke(new InvokeDelegate(TagInvoke2), txt);
                         }
 
-                        //were in the serial ports thread, update the thread in the GUI context
-                        this.BeginInvoke(new InvokeDelegate(TagInvoke), txt);
+                        
                         
                     }
                     catch (Exception ex)
@@ -128,6 +131,14 @@ namespace MettleLib
         }
 
         //Update the control in the GUI thread context
+        //single like text box
+        public void TagInvoke2(string s)
+        {
+            this.Text = s;
+        }
+
+        //Update the control in the GUI thread context
+        //Multiline text box
         public void TagInvoke(string s)
         {
             this.AppendText(s);
@@ -151,7 +162,7 @@ namespace MettleLib
             }
         }
 
-        string dummy;
+        string m_Sort;
         [System.ComponentModel.Browsable(true),
         System.ComponentModel.Category("Mettle"),
         System.ComponentModel.Description("The Sort name filter (AKA tag). Leave blank to see all Sorts for this module")]
@@ -159,27 +170,11 @@ namespace MettleLib
         {
             get
             {
-                if (this.Site == null || !this.Site.DesignMode)
-                {
-                    // Not in design mode, okay to do dangerous stuff...
-                    return base.Tag.ToString();
-                }
-                else
-                {
-                    return dummy;
-                }
-                
+                return m_Sort;
             }
             set
             {
-                if (this.Site == null || !this.Site.DesignMode)
-                {
-                    base.Tag = value;
-                }
-                else
-                {
-                    dummy = value; 
-                }
+                m_Sort = value; 
             }
         }
     }

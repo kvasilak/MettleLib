@@ -7,7 +7,7 @@ using System.Windows.Forms;
 using System.Diagnostics;
 using System.Threading;
 using System.IO.Ports;
-
+using System.Globalization;
 
 namespace MettleLib
 {
@@ -289,11 +289,25 @@ namespace MettleLib
                                 t.Data = instr.Substring(comma2 + 1, end - (comma2 + 1)).Trim(); //data
 
                                 //see if there is a number in the data
-                                if (int.TryParse(t.Data, out d))
+                                if (t.Data.StartsWith("0x", StringComparison.CurrentCultureIgnoreCase))
                                 {
-                                    t.Value = d;
-                                    t.ValueValid = true;
+                                    string valstr = t.Data.Substring(2);
+                                    UInt16 val;
 
+                                    if(UInt16.TryParse(valstr, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out val))
+                                    {
+                                        t.Value = val;
+                                        t.ValueValid = true;
+                                    }
+                                }
+                                else
+                                {
+                                    if (int.TryParse(t.Data, out d))
+                                    {
+                                        t.Value = d;
+                                        t.ValueValid = true;
+
+                                    }
                                 }
 
                                 //Trace.WriteLine("Module, " + t.ModuleName + ", ");

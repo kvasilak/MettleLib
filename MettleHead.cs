@@ -65,10 +65,13 @@ namespace MettleLib
         {
             foreach (Control c in frmMain.Controls)
             {
+                AddControl(c);
+
                 foreach (Control ctl in c.Controls)
                 {
                     AddControl(ctl);
                 }
+                
             }
         }
 
@@ -106,6 +109,8 @@ namespace MettleLib
         {
             foreach (Control c in frmMain.Controls)
             {
+                ResetControl(c);
+
                 foreach (Control ctl in c.Controls)
                 {
                     ResetControl(ctl);
@@ -294,6 +299,7 @@ namespace MettleLib
                                     string valstr = t.Data.Substring(2);
                                     UInt16 val;
 
+                                    //Hex numbers are considered unsigned
                                     if(UInt16.TryParse(valstr, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out val))
                                     {
                                         t.Value = val;

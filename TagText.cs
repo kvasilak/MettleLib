@@ -34,7 +34,10 @@ namespace MettleLib
         private static extern IntPtr SendMessage(IntPtr h, int msg, int wParam, int[] lParam);
         private const int TabSize = 4;
 
+        //Property variables
         private string m_ModuleName;
+        private string m_Sort;
+        private bool UsetimeStamp = false;
         
         public delegate void InvokeDelegate(string s);
 
@@ -141,6 +144,11 @@ namespace MettleLib
         //Multiline text box
         public void TagInvoke(string s)
         {
+            if (UsetimeStamp)
+            {
+                //this.AppendText(DateTime.Now.ToLongTimeString() + "; ");
+                this.AppendText(DateTime.Now.ToString("HH:mm:ss; "));
+            }
             this.AppendText(s);
             ScrollToCaret();
         }
@@ -162,7 +170,6 @@ namespace MettleLib
             }
         }
 
-        string m_Sort;
         [System.ComponentModel.Browsable(true),
         System.ComponentModel.Category("Mettle"),
         System.ComponentModel.Description("The Sort name filter (AKA tag). Leave blank to see all Sorts for this module")]
@@ -175,6 +182,21 @@ namespace MettleLib
             set
             {
                 m_Sort = value; 
+            }
+        }
+
+        [System.ComponentModel.Browsable(true),
+        System.ComponentModel.Category("Mettle"),
+        System.ComponentModel.Description("Display a HH:MM:SS timestamp for each line")]
+        public bool Timestamp
+        {
+            get
+            {
+                return UsetimeStamp;
+            }
+            set
+            {
+                UsetimeStamp = value;
             }
         }
     }

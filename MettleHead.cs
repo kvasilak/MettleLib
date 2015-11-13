@@ -277,10 +277,22 @@ namespace MettleLib
                         //found start and end, find the comma
                         comma = instr.IndexOf(",", start + 1);
 
+                        //comma not found look for spaces instead
+                        if(comma < 0)
+                        {
+                            comma = instr.IndexOf(" ", start + 1);
+                        }
+
                         if (comma > 0)
                         {
                             //find the second comma
                             comma2 = instr.IndexOf(",", comma + 1);
+
+                            //second comma not found, look for second space
+                            if (comma2 < 0)
+                            {
+                                comma2 = instr.IndexOf(" ", comma + 1);
+                            }
 
                             //find the second command AND need at last one char between second comma and <
                             if ((comma2 > 0) && ((comma2 + 1) < end))

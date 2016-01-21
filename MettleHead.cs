@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.IO.Ports;
 using System.Globalization;
+using System.Threading.Tasks;
 
 namespace MettleLib
 {
@@ -272,27 +273,24 @@ namespace MettleLib
                 {
                     end = instr.IndexOf("<", start + 1);
 
-                    if (end > start + 5)//>a,b,c< absloute minimum valid tag
+                    if (end > start + 5)//>a,b,c< absolute minimum valid tag
                     {
                         //found start and end, find the comma
                         comma = instr.IndexOf(",", start + 1);
-
-                        //comma not found look for spaces instead
-                        if(comma < 0)
-                        {
-                            comma = instr.IndexOf(" ", start + 1);
-                        }
 
                         if (comma > 0)
                         {
                             //find the second comma
                             comma2 = instr.IndexOf(",", comma + 1);
+                            if(comma2<0) comma2 = int.MaxValue;
 
-                            //second comma not found, look for second space
-                            if (comma2 < 0)
-                            {
-                                comma2 = instr.IndexOf(" ", comma + 1);
-                            }
+                            int wspace = instr.IndexOf(" ", comma + 1);
+                            if (wspace < 0) wspace = int.MaxValue;
+
+                            int period = instr.IndexOf(".", comma + 1);
+                            if (period < 0) period = int.MaxValue;
+
+                            comma2 = Math.Min(Math.Min(comma2, wspace), period);
 
                             //find the second command AND need at last one char between second comma and <
                             if ((comma2 > 0) && ((comma2 + 1) < end))
@@ -301,9 +299,9 @@ namespace MettleLib
                                 TagEvent t = new TagEvent();
 
                                 //split the tag and cleanup any whitespace
-                                t.ModuleName = instr.Substring(start + 1, comma - (start + 1)).Trim(); //module name
-                                t.Name = instr.Substring(comma + 1, comma2 - (comma + 1)).Trim(); //tag name
-                                t.Data = instr.Substring(comma2 + 1, end - (comma2 + 1)).Trim(); //data
+                                t.ModuleName = instr.Substring(start + 1, comma - (start + 1)).TrimEnd(); //module name
+                                t.Name = instr.Substring(comma + 1, comma2 - (comma + 1)).TrimEnd(); //tag name
+                                t.Data = instr.Substring(comma2 + 1, end - (comma2 + 1)).TrimEnd(); //data
 
                                 //see if there is a number in the data
                                 if (t.Data.StartsWith("0x", StringComparison.CurrentCultureIgnoreCase))
@@ -353,7 +351,7 @@ namespace MettleLib
                     }
                     else
                     {
-                        //Trace.WriteLine("error2, " + instr.Substring(offset) + "\n");
+                        Trace.WriteLine("error2, " + instr.Substring(offset) + "\n");
 
                         if (null != TagErrorEvent)
                             TagErrorEvent(instr.Substring(offset));
@@ -370,7 +368,40 @@ namespace MettleLib
             return end;
         }
 
-        
+        //Write the supplied string to the serial port
+        public bool SendString(string str)
+        {
+            bool success = false;
+
+            if (TheSerialPort.IsOpen)
+            {
+                TheSerialPort.Write(str);
+                success = true;
+            }
+
+            return success;
+        }
+
+        public void LoadLogFile(string pathname)
+        {
+            string line;
+
+            System.IO.StreamReader file = new System.IO.StreamReader(pathname);
+
+            while ((line = file.ReadLine()) != null)
+            {
+                ParseTags(line, 0);
+
+                //send message to UI
+                if (null != TagLine)
+                    TagLine.Invoke(line);
+
+                
+            }
+
+            file.Close();
+        }
+
     }
 
     

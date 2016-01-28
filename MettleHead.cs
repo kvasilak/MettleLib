@@ -188,9 +188,9 @@ namespace MettleLib
                     {
                         //copy all data up to \n
                         //as long as there IS data
-                        if (cr > 1)
-                        {
-                            Rx = RXBuffer.Substring(0, cr);
+                        //if (cr > 1)
+                        //{
+                        Rx = RXBuffer.Substring(position, cr - position);
 
                             //send message to UI
                             if (null != TagLine)
@@ -199,21 +199,21 @@ namespace MettleLib
                             //Trace.WriteLine(Rx + "\n");
 
                             //Process the message
-                            try
-                            {
-                                do //may have multiple tags per line
-                                {
+                            //try
+                            //{
+                            //    //do //may have multiple tags per line
+                            //    //{
                                     position = ParseTags(Rx, position);
-                                }
-                                while ((position > 0) && (position < Rx.Length));
-                            }
-                            catch (Exception ex)
-                            {
-                                Trace.WriteLine("serial0, " + ex.Message + "\n");
-                                Type ep = ex.GetType();
-                                return;
-                            }
-                        }
+                            //    //}
+                            //    //while ((position > 0) && (position < Rx.Length));
+                            //}
+                            //catch (Exception ex)
+                            //{
+                            //    Trace.WriteLine("serial0, " + ex.Message + "\n");
+                            //    Type ep = ex.GetType();
+                            //    return;
+                            //}
+                        //}
 
                         //Copy everything after \n back into rx buffer, removing string just sent
                         int len = RXBuffer.Length - (cr + 1);
@@ -228,11 +228,15 @@ namespace MettleLib
                         RXBuffer = temp;
 
                         //any more \n?
-                        cr = RXBuffer.IndexOf("\n");
 
                         position = 0;
 
+                        cr = RXBuffer.IndexOf("\n", position);
+
+
                     }
+
+                    //position = 0;
 
                     //stripError.Text = "No Errors";
                 }
